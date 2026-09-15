@@ -4,5 +4,8 @@ class URLRequest(BaseModel):
   url:str
 
 class URLResponse(BaseModel):
-  status:str
-  confidence:str
+  status: str
+  confidence: float
+  reason: str
+
+
