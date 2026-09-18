@@ -1,18 +1,18 @@
 import os
 import json
 from google import genai
-from fastapi import APIRouter
-from dotenv import load_dotenv
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from app.schemas.message_schema import MessageRequest, MessageResponse
-
-load_dotenv()
+from app.database import get_db
+from app import models
 
 router = APIRouter()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 @router.post("/check-message", response_model=MessageResponse)
-def check_message(request: MessageRequest):
+def check_message(request: MessageRequest, db: Session = Depends(get_db)):
     prompt = f"""
 You are a scam detection assistant. Analyze this message and decide if it's a scam, phishing attempt, or safe.
 
@@ -33,8 +33,18 @@ Respond ONLY with valid JSON in this exact format, nothing else:
 
     text = response.text.strip()
     text = text.replace("```json", "").replace("```", "").strip()
-
     data = json.loads(text)
+
+    scan = models.Scan(
+        user_id=None,
+        input_type="message",
+        input_value=request.message,
+        status=data["status"],
+        confidence=data["confidence"],
+        reason=data["reason"]
+    )
+    db.add(scan)
+    db.commit()
 
     return MessageResponse(
         status=data["status"],

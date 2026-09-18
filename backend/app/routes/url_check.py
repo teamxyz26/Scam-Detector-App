@@ -1,10 +1,10 @@
 import os
 import requests
-from fastapi import APIRouter
-from dotenv import load_dotenv
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from app.schemas.url_schema import URLRequest, URLResponse
-
-load_dotenv()
+from app.database import get_db
+from app import models
 
 router = APIRouter()
 
@@ -12,7 +12,7 @@ SAFE_BROWSING_KEY = os.getenv("GOOGLE_SAFE_BROWSING_KEY")
 SAFE_BROWSING_URL = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={SAFE_BROWSING_KEY}"
 
 @router.post("/check-url", response_model=URLResponse)
-def check_url(request: URLRequest):
+def check_url(request: URLRequest, db: Session = Depends(get_db)):
     payload = {
         "client": {"clientId": "scamguard-ai", "clientVersion": "1.0"},
         "threatInfo": {
@@ -27,14 +27,19 @@ def check_url(request: URLRequest):
     result = response.json()
 
     if result:
-        return URLResponse(
-            status="dangerous",
-            confidence=0.95,
-            reason="This URL matches a known scam/malware/phishing database entry."
-        )
+        status, confidence, reason = "dangerous", 0.95, "This URL matches a known scam/malware/phishing database entry."
     else:
-        return URLResponse(
-            status="safe",
-            confidence=0.8,
-            reason="No known threats found for this URL."
-        )
+        status, confidence, reason = "safe", 0.8, "No known threats found for this URL."
+
+    scan = models.Scan(
+        user_id=None,
+        input_type="url",
+        input_value=request.url,
+        status=status,
+        confidence=confidence,
+        reason=reason
+    )
+    db.add(scan)
+    db.commit()
+
+    return URLResponse(status=status, confidence=confidence, reason=reason)
