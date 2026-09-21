@@ -42,7 +42,7 @@ def check_url(request: URLRequest, db: Session = Depends(get_db)):
         status, confidence, reason = "safe", 0.8, "No known threats found for this URL."
 
     scan = models.Scan(
-        user_id=None,
+        user_id=request.user_id,
         input_type="url",
         input_value=request.url,
         status=status,
