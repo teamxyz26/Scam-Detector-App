@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 
-void main(){
+import 'app_colors.dart';
+import 'pro_subscription_page.dart';
+
+void main() {
   runApp(const ScamGuardApp());
 }
-
-const muted = Color(0xFF718083);
-const aqua = Color(0xFF53D8D0);
-const cyan = Color(0xFF49BFDF);
-const panel = Color(0xFF101719);
-const line = Color(0xFF1D2A2D);
 
 class ScamGuardApp extends StatelessWidget {
   const ScamGuardApp({super.key});
@@ -27,9 +24,662 @@ class ScamGuardApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const ScamGuardShell(),
+      home: AuthScreen(destinationBuilder: () => const ScamGuardShell()),
     );
   }
+}
+
+class ScanReportPage extends StatelessWidget {
+  const ScanReportPage({
+    super.key,
+    required this.url,
+    required this.suspicious,
+    required this.onNavigate,
+  });
+
+  final String url;
+  final bool suspicious;
+  final ValueChanged<int> onNavigate;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = suspicious
+        ? const Color(0xFFEF777E)
+        : const Color(0xFF63D19A);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF080C0D),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(18, 27, 18, 24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _reportHeader(context),
+                        const SizedBox(height: 28),
+                        const Text(
+                          'Scan Result',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 26),
+                        _scorePanel(accent),
+                        const SizedBox(height: 20),
+                        _urlRow(),
+                        const SizedBox(height: 24),
+                        _indicatorHeader(),
+                        const SizedBox(height: 13),
+                        _indicator('Valid SSL certificate (EV)', !suspicious),
+                        _indicator('Domain 8+ years registered', !suspicious),
+                        _indicator('No malicious redirects found', !suspicious),
+                        const SizedBox(height: 22),
+                        _unlockButton(context),
+                        const SizedBox(height: 14),
+                        OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(58),
+                            foregroundColor: muted,
+                            side: const BorderSide(color: Color(0xFF20242A)),
+                            backgroundColor: const Color(0xFF17191E),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: const Text(
+                            'Scan Another',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            _reportNav(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _reportHeader(BuildContext context) => Row(
+    children: [
+      IconButton(
+        onPressed: () => Navigator.pop(context),
+        icon: const Icon(Icons.arrow_back, color: muted),
+        tooltip: 'Back',
+      ),
+      const SizedBox(width: 4),
+      const Text(
+        'S C A M G U A R D  A I',
+        style: TextStyle(
+          color: aqua,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 2,
+        ),
+      ),
+    ],
+  );
+
+  Widget _scorePanel(Color accent) => Container(
+    padding: const EdgeInsets.fromLTRB(18, 24, 18, 25),
+    decoration: BoxDecoration(
+      color: const Color(0xFF0B1D17),
+      border: Border.all(color: accent.withValues(alpha: .25)),
+      borderRadius: BorderRadius.circular(28),
+    ),
+    child: Column(
+      children: [
+        SizedBox(
+          width: 174,
+          height: 174,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: accent.withValues(alpha: .16),
+                    width: 10,
+                  ),
+                ),
+              ),
+              Icon(
+                suspicious ? Icons.close : Icons.check,
+                color: accent,
+                size: 62,
+              ),
+              Positioned(
+                bottom: 30,
+                child: Text(
+                  suspicious ? '82/100' : '8/100',
+                  style: TextStyle(color: accent, fontSize: 17),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: .1),
+            border: Border.all(color: accent.withValues(alpha: .25)),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            suspicious ? '⚠ LINK NEEDS ATTENTION' : '✓ LINK IS SAFE',
+            style: TextStyle(
+              color: accent,
+              fontSize: 11,
+              letterSpacing: 1.3,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          suspicious ? 'Potential Threat Detected' : "You're Safe to Proceed",
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          suspicious
+              ? 'Suspicious patterns were found in this link.'
+              : 'No threats detected across 40+ security checks.\nThis link appears legitimate.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: muted, fontSize: 15, height: 1.5),
+        ),
+      ],
+    ),
+  );
+
+  Widget _urlRow() => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
+    decoration: BoxDecoration(
+      color: const Color(0xFF0D1113),
+      border: Border.all(color: const Color(0xFF151D1F)),
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.link, color: const Color(0xFF54CBA4), size: 20),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Text(
+            url,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: muted, fontSize: 13),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _indicatorHeader() => const Row(
+    children: [
+      Text(
+        'THREAT INDICATORS',
+        style: TextStyle(color: muted, fontSize: 10, letterSpacing: 2),
+      ),
+      Spacer(),
+      Icon(Icons.lock_outline, color: cyan, size: 13),
+      SizedBox(width: 4),
+      Text(
+        'FULL REPORT: PRO',
+        style: TextStyle(color: cyan, fontSize: 10, letterSpacing: .8),
+      ),
+    ],
+  );
+
+  Widget _indicator(String label, bool safe) => Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
+    decoration: BoxDecoration(
+      color: const Color(0xFF0D1415),
+      border: Border.all(color: const Color(0xFF172426)),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Row(
+      children: [
+        Icon(
+          Icons.circle,
+          color: safe ? const Color(0xFF63D19A) : Colors.redAccent,
+          size: 10,
+        ),
+        const SizedBox(width: 15),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(color: muted, fontSize: 15),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: safe ? const Color(0xFF12352D) : const Color(0xFF3A2026),
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Text(
+            safe ? 'SAFE' : 'RISK',
+            style: TextStyle(
+              color: safe ? const Color(0xFF6BD19A) : Colors.redAccent,
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+              letterSpacing: .8,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _unlockButton(BuildContext context) => SizedBox(
+    height: 60,
+    child: OutlinedButton.icon(
+      onPressed: () => onNavigate(3),
+      icon: const Icon(Icons.star_border, color: cyan),
+      label: const Text(
+        'Unlock Full Threat Report',
+        style: TextStyle(
+          color: cyan,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Color(0xFF23696A)),
+        backgroundColor: const Color(0xFF0D2224),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    ),
+  );
+
+  Widget _reportNav() => Container(
+    padding: const EdgeInsets.fromLTRB(7, 8, 7, 10),
+    decoration: const BoxDecoration(
+      color: Color(0xF70C1214),
+      border: Border(top: BorderSide(color: line)),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _ReportNavItem(
+          Icons.shield_outlined,
+          'SHIELD',
+          onTap: () => onNavigate(0),
+        ),
+        _ReportNavItem(
+          Icons.search,
+          'SCAN',
+          active: true,
+          onTap: () => onNavigate(1),
+        ),
+        _ReportNavItem(Icons.history, 'HISTORY', onTap: () => onNavigate(2)),
+        _ReportNavItem(Icons.star_border, 'PRO', onTap: () => onNavigate(3)),
+      ],
+    ),
+  );
+}
+
+class _ReportNavItem extends StatelessWidget {
+  const _ReportNavItem(
+    this.icon,
+    this.label, {
+    required this.onTap,
+    this.active = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(8),
+    child: Container(
+      width: 70,
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      decoration: BoxDecoration(
+        color: active ? const Color(0xFF15383B) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 22, color: active ? aqua : muted),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: active ? aqua : muted,
+              fontSize: 8,
+              letterSpacing: .7,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ReportBadge extends StatelessWidget {
+  const _ReportBadge(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+    decoration: BoxDecoration(
+      color: const Color(0xFF15181D),
+      border: Border.all(color: const Color(0xFF272C33)),
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: Text(
+      label,
+      style: const TextStyle(color: muted, fontSize: 10, letterSpacing: 1.5),
+    ),
+  );
+}
+
+class _TrustNote extends StatelessWidget {
+  const _TrustNote(this.icon, this.label);
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, color: const Color(0xFFE5BD63), size: 12),
+      const SizedBox(width: 4),
+      Text(label, style: const TextStyle(color: muted, fontSize: 9)),
+    ],
+  );
+}
+
+class AuthScreen extends StatefulWidget {
+  const AuthScreen({super.key, required this.destinationBuilder});
+
+  final Widget Function() destinationBuilder;
+
+  @override
+  State<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends State<AuthScreen> {
+  bool isSignIn = true;
+  bool obscurePassword = true;
+
+  void continueToApp() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => widget.destinationBuilder()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(28, 34, 28, 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 430),
+              child: Column(
+                children: [
+                  Container(
+                    width: 86,
+                    height: 86,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10292B),
+                      border: Border.all(color: const Color(0xFF23696A)),
+                      borderRadius: BorderRadius.circular(26),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x3324BFC0), blurRadius: 30),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.shield_outlined,
+                      color: aqua,
+                      size: 43,
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  const Text(
+                    'S C A M G U A R D  A I',
+                    style: TextStyle(
+                      color: aqua,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2.4,
+                    ),
+                  ),
+                  const SizedBox(height: 17),
+                  Text(
+                    isSignIn ? 'Welcome back' : 'Create account',
+                    style: const TextStyle(
+                      fontSize: 29,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    isSignIn
+                        ? 'Sign in to your account'
+                        : 'Start protecting yourself today',
+                    style: const TextStyle(color: muted, fontSize: 16),
+                  ),
+                  const SizedBox(height: 34),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: panel,
+                      border: Border.all(color: line),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        _authTab('SIGN IN', isSignIn, () {
+                          setState(() => isSignIn = true);
+                        }),
+                        _authTab('SIGN UP', !isSignIn, () {
+                          setState(() => isSignIn = false);
+                        }),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 58,
+                    child: OutlinedButton.icon(
+                      onPressed: continueToApp,
+                      icon: const Text(
+                        'G',
+                        style: TextStyle(
+                          color: Color(0xFF4285F4),
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      label: const Text(
+                        'Continue with Google',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: line),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: line)),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14),
+                        child: Text(
+                          'O R',
+                          style: TextStyle(color: muted, letterSpacing: 2),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: line)),
+                    ],
+                  ),
+                  const SizedBox(height: 23),
+                  _authField('EMAIL', 'you@example.com', Icons.mail_outline),
+                  const SizedBox(height: 17),
+                  _authField(
+                    'PASSWORD',
+                    '••••••••',
+                    Icons.lock_outline,
+                    trailing: IconButton(
+                      onPressed: () =>
+                          setState(() => obscurePassword = !obscurePassword),
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: muted,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  if (isSignIn)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {},
+                        child: const Text(
+                          'FORGOT PASSWORD?',
+                          style: TextStyle(color: aqua, fontSize: 11),
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 17),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 58,
+                    child: ElevatedButton(
+                      onPressed: continueToApp,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: cyan,
+                        foregroundColor: const Color(0xFF071114),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        isSignIn ? 'Sign In' : 'Create Account',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: continueToApp,
+                    child: const Text(
+                      'Continue as guest',
+                      style: TextStyle(color: muted, fontSize: 15),
+                    ),
+                  ),
+                  const SizedBox(height: 26),
+                  const Text(
+                    'By continuing you agree to our Terms and Privacy Policy',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: muted, fontSize: 10),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _authTab(String label, bool selected, VoidCallback onTap) => Expanded(
+    child: GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF0D1214) : Colors.transparent,
+          border: selected ? Border.all(color: line) : null,
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : muted,
+            fontSize: 11,
+            letterSpacing: 2,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  Widget _authField(
+    String label,
+    String hint,
+    IconData icon, {
+    Widget? trailing,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(color: muted, fontSize: 10, letterSpacing: 2),
+      ),
+      const SizedBox(height: 8),
+      TextField(
+        obscureText: label == 'PASSWORD' && obscurePassword,
+        style: const TextStyle(fontSize: 15),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: muted, fontSize: 15),
+          prefixIcon: Icon(icon, color: muted, size: 20),
+          suffixIcon: trailing,
+          filled: true,
+          fillColor: const Color(0xFF101216),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: line),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: line),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class ScanEntry {
@@ -64,9 +714,30 @@ class _ScamGuardShellState extends State<ScamGuardShell> {
   }
 
   void scanUrl() {
-    final value = urlController.text.trim();
-    if (value.isEmpty) {
-      setState(() => scanMessage = 'Paste a URL first.');
+    final rawValue = urlController.text.trim();
+    if (rawValue.isEmpty) {
+      setState(() {
+        scanMessage = 'Paste a link first.';
+        scanIsSafe = null;
+      });
+      return;
+    }
+    final value = rawValue.startsWith(RegExp(r'https?://'))
+        ? rawValue
+        : 'https://$rawValue';
+    final uri = Uri.tryParse(value);
+    final host = uri?.host ?? '';
+    final validUrl =
+        uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        host.contains('.') &&
+        !host.contains(' ') &&
+        !value.contains(RegExp(r'\s'));
+    if (!validUrl) {
+      setState(() {
+        scanMessage = 'Enter a valid link, such as https://example.com.';
+        scanIsSafe = null;
+      });
       return;
     }
     final lower = value.toLowerCase();
@@ -90,7 +761,193 @@ class _ScamGuardShellState extends State<ScamGuardShell> {
         ScanEntry(value, suspicious ? 'CRITICAL' : 'SAFE', 'Today, now'),
       );
     });
+    _showScanResult(value, suspicious);
   }
+
+  void _showScanResult(String value, bool suspicious) {
+    if (suspicious) {
+      _showFakeUrlSheet(value);
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ScanReportPage(
+          url: value,
+          suspicious: suspicious,
+          onNavigate: (index) {
+            if (!mounted) return;
+            Navigator.pop(context);
+            setState(() => tab = index);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showFakeUrlSheet(String value) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0E1012),
+      barrierColor: const Color(0xCC000000),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 54,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF293135),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 26),
+              Row(
+                children: [
+                  Container(
+                    width: 74,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFF293135)),
+                    ),
+                    child: const Icon(Icons.link_off, color: muted, size: 34),
+                  ),
+                  const SizedBox(width: 18),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _ReportBadge('NOT FOUND'),
+                        SizedBox(height: 11),
+                        Text(
+                          "This URL Doesn't Exist",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 25),
+              Row(
+                children: [
+                  _sheetMetric('N/A', 'RISK SCORE', muted),
+                  _sheetMetric('6', 'CHECKS RUN', cyan),
+                  _sheetMetric('EMPTY', 'STATUS', muted),
+                ],
+              ),
+              const SizedBox(height: 18),
+              _sheetUrl(value),
+              const SizedBox(height: 18),
+              SizedBox(
+                height: 58,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ScanReportPage(
+                          url: value,
+                          suspicious: true,
+                          onNavigate: (index) {
+                            if (!mounted) return;
+                            Navigator.pop(context);
+                            setState(() => tab = index);
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25282E),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'View Full Details',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(sheetContext),
+                child: const Text('Dismiss', style: TextStyle(color: muted)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sheetMetric(String value, String label, Color color) => Expanded(
+    child: Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFF14161B),
+        border: Border.all(color: const Color(0xFF20242A)),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: color,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(color: muted, fontSize: 8, letterSpacing: 1),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _sheetUrl(String value) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 16),
+    decoration: BoxDecoration(
+      color: const Color(0xFF14161B),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.link, color: muted, size: 17),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: muted, fontSize: 12),
+          ),
+        ),
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +975,7 @@ class _ScamGuardShellState extends State<ScamGuardShell> {
             if (tab == 0) _shieldPage(),
             if (tab == 1) _scanPage(),
             if (tab == 2) _historyPage(),
-            if (tab == 3) _proPage(),
+            if (tab == 3) const ProSubscriptionPage(),
           ],
         ),
       ),
@@ -145,20 +1002,23 @@ class _ScamGuardShellState extends State<ScamGuardShell> {
           ],
         ),
       ),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF123437),
-          border: Border.all(color: const Color(0xFF23696A)),
-          borderRadius: BorderRadius.circular(11),
-        ),
-        child: const Text(
-          'UPGRADE',
-          style: TextStyle(
-            color: aqua,
-            fontSize: 9,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
+      GestureDetector(
+        onTap: () => setState(() => tab = 3),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF123437),
+            border: Border.all(color: const Color(0xFF23696A)),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: const Text(
+            'UPGRADE',
+            style: TextStyle(
+              color: aqua,
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
           ),
         ),
       ),
@@ -239,6 +1099,11 @@ class _ScamGuardShellState extends State<ScamGuardShell> {
             TextField(
               controller: urlController,
               style: const TextStyle(fontSize: 11),
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.done,
+              autocorrect: false,
+              enableSuggestions: false,
+              onSubmitted: (_) => scanUrl(),
               decoration: _inputDecoration('Paste URL here...'),
             ),
             const SizedBox(height: 12),
@@ -353,88 +1218,251 @@ class _ScamGuardShellState extends State<ScamGuardShell> {
     children: [
       const SizedBox(height: 28),
       _eyebrow('SCAMGUARD PRO'),
+      const SizedBox(height: 12),
+      const Text(
+        'Upgrade to Pro and get unlimited scans, full\nthreat reports, and saved history.',
+        style: TextStyle(color: muted, fontSize: 13, height: 1.45),
+      ),
+      const SizedBox(height: 22),
+      Row(
+        children: [
+          _planCard('\$2.99', '/month', 'MONTHLY', false),
+          const SizedBox(width: 10),
+          _planCard('\$1.49', '/month', 'YEARLY', true),
+        ],
+      ),
+      const SizedBox(height: 18),
       Container(
-        padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          gradient: const RadialGradient(
-            colors: [Color(0xFF16575A), Color(0xFF0E1517)],
-            radius: 1.1,
-          ),
-          border: Border.all(color: const Color(0xFF235254)),
-          borderRadius: BorderRadius.circular(12),
+          color: const Color(0xFF111419),
+          border: Border.all(color: const Color(0xFF20242A)),
+          borderRadius: BorderRadius.circular(17),
         ),
         child: Column(
           children: [
-            const Icon(Icons.shield_outlined, color: aqua, size: 38),
-            const SizedBox(height: 12),
-            const Text(
-              'Total Protection,',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            _proFeature(
+              Icons.all_inclusive,
+              'Unlimited scans',
+              'No daily cap, ever',
             ),
-            const Text(
-              'Zero Limits',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            _proFeature(
+              Icons.description_outlined,
+              'Full threat report',
+              'All risk indicators unlocked',
             ),
-            const SizedBox(height: 9),
-            const Text(
-              'Upgrade to Pro for unlimited scans, full threat reports, and saved history.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: muted, fontSize: 10),
+            _proFeature(
+              Icons.access_time,
+              'Saved scan history',
+              '30-day searchable log',
             ),
-            const SizedBox(height: 15),
-            const Text(
-              '\$1.49',
-              style: TextStyle(
-                color: Color(0xFFF0C96D),
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+            _proFeature(
+              Icons.psychology_outlined,
+              'AI risk breakdown',
+              'Detailed pattern analysis',
             ),
-            const Text('/ month', style: TextStyle(color: muted, fontSize: 9)),
-          ],
-        ),
-      ),
-      const SizedBox(height: 12),
-      _action(
-        'Upgrade to Pro',
-        () => ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pro checkout is ready to connect.')),
-        ),
-      ),
-      _card(
-        Column(
-          children: [
-            _sectionTitle('INCLUDED WITH PRO'),
-            ...[
-              ['UNLIMITED SCANS', 'No daily scan limit'],
-              ['FULL THREAT REPORT', 'AI risk breakdown'],
-              ['SAVED SCAN HISTORY', 'Never lose a result'],
-              ['REAL-TIME ALERTS', 'Know when a threat is found'],
-            ].map(
-              (item) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.check_circle_outline,
-                  color: aqua,
-                  size: 18,
-                ),
-                title: Text(
-                  item[0],
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Text(
-                  item[1],
-                  style: const TextStyle(color: muted, fontSize: 8),
-                ),
-              ),
+            _proFeature(
+              Icons.notifications_none,
+              'Real-time alerts',
+              'Push notifications for threats',
+            ),
+            _proFeature(
+              Icons.search,
+              'Basic URL scans',
+              '3 per day',
+              enabled: false,
             ),
           ],
         ),
+      ),
+      const SizedBox(height: 18),
+      SizedBox(
+        height: 58,
+        child: ElevatedButton(
+          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Free trial checkout is ready to connect.'),
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: cyan,
+            foregroundColor: const Color(0xFF071114),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+          child: const Text(
+            'Start Free Trial - 7 Days',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+      const SizedBox(height: 15),
+      const Text(
+        'Cancel anytime. Billed via RevenueCat. No hidden fees.',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: muted, fontSize: 11),
+      ),
+      const SizedBox(height: 19),
+      const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _TrustNote(Icons.lock, 'Secure'),
+          SizedBox(width: 19),
+          _TrustNote(Icons.check, 'Cancel anytime'),
+          SizedBox(width: 19),
+          _TrustNote(Icons.bolt, 'Instant access'),
+        ],
       ),
     ],
+  );
+
+  Widget _planCard(
+    String price,
+    String suffix,
+    String label,
+    bool selected,
+  ) => Expanded(
+    child: Container(
+      height: 144,
+      padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFF111B1D) : const Color(0xFF111419),
+        border: Border.all(
+          color: selected ? const Color(0xFF258D8D) : const Color(0xFF20242A),
+          width: selected ? 1.5 : 1,
+        ),
+        borderRadius: BorderRadius.circular(17),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: muted,
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 17),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    price,
+                    style: TextStyle(
+                      color: selected ? const Color(0xFFD97A42) : Colors.white,
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    suffix,
+                    style: const TextStyle(color: muted, fontSize: 10),
+                  ),
+                ],
+              ),
+              if (selected) ...[
+                const SizedBox(height: 8),
+                const Text(
+                  'billed annually',
+                  style: TextStyle(color: muted, fontSize: 9),
+                ),
+              ],
+            ],
+          ),
+          if (selected)
+            Positioned(
+              top: -34,
+              right: -4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: cyan,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'SAVE 50%',
+                  style: TextStyle(
+                    color: Color(0xFF071114),
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _proFeature(
+    IconData icon,
+    String title,
+    String subtitle, {
+    bool enabled = true,
+  }) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: Color(0xFF20242A))),
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: enabled ? const Color(0xFF112A28) : const Color(0xFF17191E),
+            border: Border.all(
+              color: enabled
+                  ? const Color(0xFF23504D)
+                  : const Color(0xFF20242A),
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: enabled ? const Color(0xFFD9E0DE) : muted,
+            size: 21,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: enabled ? Colors.white : muted,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: const TextStyle(color: muted, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+        Icon(
+          enabled ? Icons.check_circle_outline : Icons.remove_circle_outline,
+          color: enabled ? const Color(0xFF63D19A) : const Color(0xFF454A52),
+          size: 21,
+        ),
+      ],
+    ),
   );
 
   Widget _bottomNav() => Container(
