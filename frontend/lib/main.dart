@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 import 'pro_subscription_page.dart';
+import 'api_service.dart';
 
 void main() {
   runApp(const ScamGuardApp());
@@ -698,6 +699,7 @@ class ScamGuardShell extends StatefulWidget {
 
 class _ScamGuardShellState extends State<ScamGuardShell> {
   int tab = 0;
+  int? userId;
   final urlController = TextEditingController();
   final history = <ScanEntry>[
     ScanEntry('netflix.com', 'SAFE', 'Today, 8:41 AM'),
@@ -707,13 +709,26 @@ class _ScamGuardShellState extends State<ScamGuardShell> {
   String? scanMessage;
   bool? scanIsSafe;
 
+    @override
+  void initState() {
+    super.initState();
+    _setupUser();
+  }
+
+  Future<void> _setupUser() async {
+    final result = await ApiService.createUser('testuser@scamguard.com');
+    setState(() {
+      userId = result['id'];
+    });
+  }
+
   @override
   void dispose() {
     urlController.dispose();
     super.dispose();
   }
 
-  void scanUrl() {
+   Future<void> scanUrl() async {
     final rawValue = urlController.text.trim();
     if (rawValue.isEmpty) {
       setState(() {
@@ -740,22 +755,35 @@ class _ScamGuardShellState extends State<ScamGuardShell> {
       });
       return;
     }
-    final lower = value.toLowerCase();
-    final suspicious =
-        [
-          'login',
-          'verify',
-          'secure',
-          'prize',
-          'bank',
-          'free',
-        ].any(lower.contains) ||
-        lower.endsWith('.tk');
+
+    if (userId == null) {
+      setState(() {
+        scanMessage = 'Still setting up your account, try again in a moment.';
+        scanIsSafe = null;
+      });
+      return;
+    }
+
+    setState(() {
+      scanMessage = 'Scanning...';
+      scanIsSafe = null;
+    });
+
+    final result = await ApiService.checkUrl(value, userId!);
+
+    if (result['error'] == 'limit_reached') {
+      setState(() {
+        scanMessage = null;
+      });
+      setState(() => tab = 3);
+      return;
+    }
+
+    final suspicious = result['status'] != 'safe';
+
     setState(() {
       scanIsSafe = !suspicious;
-      scanMessage = suspicious
-          ? 'This address contains patterns commonly associated with phishing.'
-          : 'No immediate threats were found in this address.';
+      scanMessage = result['reason'] ?? '';
       history.insert(
         0,
         ScanEntry(value, suspicious ? 'CRITICAL' : 'SAFE', 'Today, now'),
